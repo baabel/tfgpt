@@ -2,7 +2,7 @@ package main
 
 import (
 	"os"
-	"github.com/flavius-dinu/tfgpt/pkg/util"
+	"github.com/baabel/tfgpt/pkg/util"
 )
 
 func main() {

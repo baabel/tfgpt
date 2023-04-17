@@ -1,3 +1,3 @@
-module github.com/flavius-dinu/tfgpt
+module github.com/baabel/tfgpt
 
 go 1.18
