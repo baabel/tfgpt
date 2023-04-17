@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"regexp"
 )
 
 func HandleCommand(args []string) {
@@ -15,6 +16,7 @@ func HandleCommand(args []string) {
 	}
 
 	command := args[1]
+	text := args[2]
 
 	switch command {
 	case "plan":
@@ -27,6 +29,8 @@ func HandleCommand(args []string) {
 		ExplainCommand("init")
 	case "show":
 		ExplainCommand("show")
+	case "generate":
+		GenerateCode(command, text)
 	case "concept":
 		if len(args) < 3 {
 			fmt.Println("Please provide a concept.")
@@ -38,6 +42,26 @@ func HandleCommand(args []string) {
 		fmt.Printf("Unsupported command: %s\n", command)
 		os.Exit(1)
 	}
+}
+
+func GenerateCode(command string, text string) {
+	code, err := GenerateCodeFromChatGPT(text)
+	if err != nil {
+		fmt.Printf("Error getting explanation from ChatGPT: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf(Colorize("Terraform %s output\n\n", Green), command)
+	fmt.Println(parseIac(code))
+}
+
+func parseIac(code string) string {
+	pattern := regexp.MustCompile("`{3}([\\w]*)\n([\\S\\s]+?)\n`{3}")
+	result := pattern.FindAllStringSubmatch(code, -1)
+	var codes []string
+	for _, v := range result {
+		codes = append(codes, v[1:]...)
+	}
+	return strings.Join(codes, "\n")
 }
 
 func ExplainCommand(command string) {

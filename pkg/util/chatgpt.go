@@ -13,6 +13,78 @@ import (
 
 const ChatGPTAPIURL = "https://api.openai.com/v1/chat/completions"
 
+func GenerateCodeFromChatGPT(request string) (string, error) {
+	apiKey, err := GetAPIKey()
+	if err != nil {
+		return "", err
+	}
+	var requestBody []byte
+
+	prompt := fmt.Sprintf("Generate terraform code for this following requirement, note I only need code: %s", request)
+
+	requestBody, err = json.Marshal(map[string]interface{}{
+		"model": "gpt-3.5-turbo",
+		"messages": []map[string]string{
+			{
+				"role":    "system",
+				"content": "You are an expert Terraform engineer that creates beautiful terraform infrastructure as code.",
+			},
+			{
+				"role":    "user",
+				"content": prompt,
+			},
+		},
+		"max_tokens": 500,
+	})
+	if err != nil {
+		return "", err
+	}
+	
+	req, err := http.NewRequest("POST", ChatGPTAPIURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var responseObj map[string]interface{}
+
+	if err := json.Unmarshal(responseBody, &responseObj); err != nil {
+		return "", err
+	}
+
+	if errMsg, ok := responseObj["error"].(map[string]interface{}); ok {
+		if msg, ok := errMsg["message"].(string); ok {
+			return "", fmt.Errorf("ChatGPT API error: %s", msg)
+		}
+	}
+
+	if choices, ok := responseObj["choices"].([]interface{}); ok && len(choices) > 0 {
+		if choice, ok := choices[0].(map[string]interface{}); ok {
+			if message, ok := choice["message"].(map[string]interface{}); ok {
+				if text, ok := message["content"].(string); ok {
+					return strings.TrimSpace(text), nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("failed to parse ChatGPT response")
+}
+
 func GetExplanationFromChatGPT(output string, prompt_builder string, command string) (string, error) {
 
 	apiKey, err := GetAPIKey()
