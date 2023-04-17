@@ -51,6 +51,9 @@ func GenerateCode(command string, text string) {
 		os.Exit(1)
 	}
 	fmt.Printf(Colorize("Terraform %s output\n\n", Green), command)
+	fmt.Println("RAW")
+	fmt.Println(code)
+	fmt.Println("END RAW")
 	fmt.Println(parseIac(code))
 }
 

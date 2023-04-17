@@ -34,7 +34,7 @@ func GenerateCodeFromChatGPT(request string) (string, error) {
 				"content": prompt,
 			},
 		},
-		"max_tokens": 500,
+		"max_tokens": 2048,
 	})
 	if err != nil {
 		return "", err
